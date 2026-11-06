@@ -21,7 +21,7 @@ export default function Error({
         <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-muted text-muted">
           <LockIcon className="h-5 w-5" />
         </span>
-        <h1 className="mt-4 text-lg font-semibold tracking-tight text-foreground">
+        <h1 className="mt-4 text-xl font-semibold tracking-tight text-foreground">
           Could not load your locker
         </h1>
         <p className="mt-2 text-sm leading-6 text-muted">

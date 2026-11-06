@@ -13,7 +13,7 @@ type AuthPayload = {
 };
 
 const tabBase =
-  "rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30";
+  "cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30";
 
 export default function AuthPanel() {
   const router = useRouter();

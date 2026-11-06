@@ -40,7 +40,7 @@ export default function AddIdentifierForm() {
 
   return (
     <section className={`${cardClass} p-5 sm:p-6`}>
-      <h2 className="text-base font-semibold tracking-tight text-foreground">
+      <h2 className="text-lg font-semibold tracking-tight text-foreground">
         Add a credential
       </h2>
 

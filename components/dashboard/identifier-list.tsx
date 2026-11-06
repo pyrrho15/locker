@@ -11,12 +11,12 @@ export default function IdentifierList({
   return (
     <section className={cardClass}>
       <div className="flex items-center justify-between gap-3 border-b border-border p-5 sm:p-6">
-        <h2 className="text-base font-semibold tracking-tight text-foreground">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
           Saved credentials
         </h2>
-        <span className="rounded-full border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-muted">
+        <p className="rounded-full border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-muted">
           {identifiers.length} {identifiers.length === 1 ? "entry" : "entries"}
-        </span>
+        </p>
       </div>
 
       {identifiers.length === 0 ? (
@@ -24,10 +24,10 @@ export default function IdentifierList({
           <span className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-muted text-muted">
             <LockIcon className="h-5 w-5" />
           </span>
-          <p className="mt-4 text-sm font-medium text-foreground">
+          <h3 className="mt-4 text-base font-medium text-foreground">
             Your locker is empty
-          </p>
-          <p className="mt-1 text-sm text-muted">
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-muted">
             Add your first credential using the form above.
           </p>
         </div>

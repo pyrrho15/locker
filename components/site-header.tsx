@@ -13,9 +13,9 @@ export default function SiteHeader() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-foreground transition group-hover:-rotate-3">
             <LockIcon className="h-4 w-4" />
           </span>
-          <span className="text-sm font-semibold tracking-tight text-foreground">
+          <p className="text-base font-semibold tracking-tight text-foreground">
             Locker
-          </span>
+          </p>
         </Link>
 
         <ThemeToggle />

@@ -9,6 +9,8 @@ import {
   type FormEvent,
 } from "react";
 import {
+  CheckIcon,
+  CopyIcon,
   EyeIcon,
   EyeOffIcon,
   MoreHorizontalIcon,
@@ -24,6 +26,9 @@ import {
   smallSecondaryButtonClass,
 } from "@/lib/ui";
 
+const fieldActionClass =
+  "inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30";
+
 export default function IdentifierRow({
   identifier,
 }: {
@@ -34,11 +39,21 @@ export default function IdentifierRow({
   const [editing, setEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [secret, setSecret] = useState(identifier.credential);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement>(null);
   const credentialRef = useRef<HTMLInputElement>(null);
+  const copiedTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current !== null) {
+        window.clearTimeout(copiedTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -78,6 +93,26 @@ export default function IdentifierRow({
     setSecret(identifier.credential);
     setError("");
     setEditing(false);
+  }
+
+  async function copyCredential() {
+    setError("");
+
+    try {
+      await window.navigator.clipboard.writeText(secret);
+      setCopied(true);
+
+      if (copiedTimer.current !== null) {
+        window.clearTimeout(copiedTimer.current);
+      }
+
+      copiedTimer.current = window.setTimeout(() => {
+        setCopied(false);
+        copiedTimer.current = null;
+      }, 1600);
+    } catch {
+      setError("Could not copy the credential to the clipboard");
+    }
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -155,23 +190,40 @@ export default function IdentifierRow({
             value={secret}
             onChange={(event) => setSecret(event.target.value)}
             aria-label="Credential"
-            className={`${inputClass} pr-9 ${
+            className={`${inputClass} pr-16 ${
               editing ? "" : "cursor-default bg-surface-muted/60"
             }`}
           />
-          <button
-            type="button"
-            onClick={() => setRevealed((value) => !value)}
-            aria-label={revealed ? "Hide credential" : "Show credential"}
-            title={revealed ? "Hide credential" : "Show credential"}
-            className="absolute right-1 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted transition hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
-          >
-            {revealed ? (
-              <EyeOffIcon className="h-4 w-4" />
-            ) : (
-              <EyeIcon className="h-4 w-4" />
-            )}
-          </button>
+          <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5">
+            <button
+              type="button"
+              onClick={copyCredential}
+              aria-label={copied ? "Credential copied" : "Copy credential"}
+              title={copied ? "Credential copied" : "Copy credential"}
+              className={`${fieldActionClass} ${
+                copied ? "text-accent" : "text-muted hover:text-foreground"
+              }`}
+            >
+              {copied ? (
+                <CheckIcon className="h-4 w-4" />
+              ) : (
+                <CopyIcon className="h-4 w-4" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setRevealed((value) => !value)}
+              aria-label={revealed ? "Hide credential" : "Show credential"}
+              title={revealed ? "Hide credential" : "Show credential"}
+              className={`${fieldActionClass} text-muted hover:text-foreground`}
+            >
+              {revealed ? (
+                <EyeOffIcon className="h-4 w-4" />
+              ) : (
+                <EyeIcon className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
 
         <div ref={menuRef} className="relative shrink-0">
@@ -216,7 +268,7 @@ export default function IdentifierRow({
                 type="button"
                 role="menuitem"
                 onClick={startEditing}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
               >
                 <PencilIcon className="h-4 w-4 text-muted" />
                 Edit
@@ -226,7 +278,7 @@ export default function IdentifierRow({
                 role="menuitem"
                 onClick={handleDelete}
                 disabled={busy}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger transition hover:bg-danger-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger transition hover:bg-danger-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <TrashIcon className="h-4 w-4" />
                 Delete

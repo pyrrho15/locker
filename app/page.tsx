@@ -36,7 +36,7 @@ async function HomeContent() {
     return (
       <div className="mx-auto flex w-full max-w-md flex-col justify-center py-6 sm:py-12">
         <section className={`${cardClass} p-6`}>
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
             Session out of sync
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">
@@ -55,19 +55,25 @@ async function HomeContent() {
 
   return (
     <div className="space-y-6">
+      <h1 className="sr-only">Your locker</h1>
+
       <section
         className={`${cardClass} flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6`}
       >
         <div>
-          <p className="text-sm text-muted">Signed in as</p>
-          <p className="font-medium text-foreground">{user.email}</p>
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-muted">
+            Signed in as
+          </p>
+          <p className="mt-1 text-base font-medium text-foreground">
+            {user.email}
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+          <p className="rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
             {identifiers.length}{" "}
             {identifiers.length === 1 ? "credential" : "credentials"}
-          </span>
+          </p>
           <LogoutButton />
         </div>
       </section>
@@ -81,7 +87,7 @@ async function HomeContent() {
 function HomeSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading your locker...</span>
+      <p className="sr-only">Loading your locker...</p>
       <div className="h-24 animate-pulse rounded-2xl border border-border bg-surface-muted" />
       <div className="h-36 animate-pulse rounded-2xl border border-border bg-surface-muted" />
       <div className="h-64 animate-pulse rounded-2xl border border-border bg-surface-muted" />
