@@ -10,8 +10,10 @@ import User from "@/models/User";
 /**
  * POST /api/auth/login
  * Body: { "email": "user@example.com", "password": "secret123" }
- * Sets an httpOnly cookie and also returns the token for API clients/Postman.
+ * Sets an httpOnly cookie and also returns the token for API clients/Postman..
  */
+
+
 export async function POST(req: NextRequest) {
   const body = await readJson(req);
   if (body === undefined) return fail("Request body must be valid JSON", 400);
