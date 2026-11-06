@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiFetch } from "@/lib/client-api";
+import { smallSecondaryButtonClass } from "@/lib/ui";
 
 export default function LogoutButton({
   label = "Sign out",
@@ -14,6 +15,7 @@ export default function LogoutButton({
 
   async function handleLogout() {
     setBusy(true);
+
     const result = await apiFetch<{ message: string }>("/api/auth/logout", {
       method: "POST",
     });
@@ -24,7 +26,7 @@ export default function LogoutButton({
       return;
     }
 
-    router.replace("/login");
+    setBusy(false);
     router.refresh();
   }
 
@@ -33,7 +35,7 @@ export default function LogoutButton({
       type="button"
       onClick={handleLogout}
       disabled={busy}
-      className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+      className={smallSecondaryButtonClass}
     >
       {busy ? "Signing out..." : label}
     </button>

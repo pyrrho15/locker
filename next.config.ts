@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  async redirects() {
+    return [
+      { source: "/login", destination: "/", permanent: true },
+      { source: "/register", destination: "/", permanent: true },
+      { source: "/dashboard", destination: "/", permanent: true },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

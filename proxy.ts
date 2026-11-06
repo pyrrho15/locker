@@ -2,8 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_COOKIE, getTokenFromRequest, verifyAuthToken } from "@/lib/token";
 
 const PROTECTED_API_PATHS = [/^\/api\/locker(?:\/|$)/, /^\/api\/auth\/me$/];
-const PROTECTED_PAGE_PATHS = [/^\/dashboard(?:\/|$)/];
-const GUEST_ONLY_PAGES = [/^\/login$/, /^\/register$/];
 
 function unauthorized(): NextResponse {
   return NextResponse.json(
@@ -18,50 +16,33 @@ function expiredCookie(response: NextResponse): NextResponse {
 }
 
 /**
- * Edge-of-the-app auth check. It only verifies the JWT (no DB access):
- * - API routes get a 401.
- * - Pages get redirected to /login.
- * - Signed-in users are kept away from /login and /register.
+ * Edge-of-the-app auth check for the JSON API. It only verifies the JWT (no DB
+ * access) and attaches `x-user-id` for the route handler.
  *
+ * The single page at `/` decides between the auth panel and the locker by
+ * reading the session itself, so it is intentionally not intercepted here.
  * Route handlers and Server Components verify the session again, so this is an
  * early rejection layer rather than the only line of defence.
  */
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isDashboard = PROTECTED_PAGE_PATHS.some((pattern) =>
-    pattern.test(pathname)
-  );
-  const isGuestPage = GUEST_ONLY_PAGES.some((pattern) => pattern.test(pathname));
   const isProtectedApi = PROTECTED_API_PATHS.some((pattern) =>
     pattern.test(pathname)
   );
 
-  if (!isDashboard && !isGuestPage && !isProtectedApi) {
+  if (!isProtectedApi) {
     return NextResponse.next();
   }
 
   const token = getTokenFromRequest(req);
 
-  if (isGuestPage) {
-    if (!token) return NextResponse.next();
-    const userId = await verifyAuthToken(token);
-    if (userId) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-    return NextResponse.next();
-  }
-
   if (!token) {
-    return isDashboard
-      ? NextResponse.redirect(new URL("/login", req.url))
-      : unauthorized();
+    return unauthorized();
   }
 
   const userId = await verifyAuthToken(token);
   if (!userId) {
-    return isDashboard
-      ? expiredCookie(NextResponse.redirect(new URL("/login", req.url)))
-      : expiredCookie(unauthorized());
+    return expiredCookie(unauthorized());
   }
 
   const requestHeaders = new Headers(req.headers);
@@ -71,11 +52,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/login",
-    "/register",
-    "/api/locker/:path*",
-    "/api/auth/me",
-  ],
+  matcher: ["/api/locker/:path*", "/api/auth/me"],
 };

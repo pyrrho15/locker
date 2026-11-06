@@ -1,4 +1,6 @@
+import { LockIcon } from "@/components/icons";
 import type { SerializedIdentifier } from "@/lib/serializers";
+import { cardClass } from "@/lib/ui";
 import IdentifierRow from "./identifier-row";
 
 export default function IdentifierList({
@@ -7,34 +9,35 @@ export default function IdentifierList({
   identifiers: SerializedIdentifier[];
 }) {
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-200 p-5 dark:border-zinc-800">
-        <div>
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-            Saved credentials
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Loaded from MongoDB by the dashboard Server Component.
-          </p>
-        </div>
-        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+    <section className={cardClass}>
+      <div className="flex items-center justify-between gap-3 border-b border-border p-5 sm:p-6">
+        <h2 className="text-base font-semibold tracking-tight text-foreground">
+          Saved credentials
+        </h2>
+        <span className="rounded-full border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-muted">
           {identifiers.length} {identifiers.length === 1 ? "entry" : "entries"}
         </span>
       </div>
 
       {identifiers.length === 0 ? (
-        <div className="p-8 text-center">
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+        <div className="flex flex-col items-center px-6 py-12 text-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-muted text-muted">
+            <LockIcon className="h-5 w-5" />
+          </span>
+          <p className="mt-4 text-sm font-medium text-foreground">
             Your locker is empty
           </p>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Add your first identifier using the form above.
+          <p className="mt-1 text-sm text-muted">
+            Add your first credential using the form above.
           </p>
         </div>
       ) : (
-        <ul className="divide-y divide-zinc-200 px-5 dark:divide-zinc-800">
+        <ul className="divide-y divide-border px-5 sm:px-6">
           {identifiers.map((identifier) => (
-            <IdentifierRow key={identifier.id} identifier={identifier} />
+            <IdentifierRow
+              key={`${identifier.id}:${identifier.credential}`}
+              identifier={identifier}
+            />
           ))}
         </ul>
       )}

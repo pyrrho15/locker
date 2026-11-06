@@ -14,8 +14,8 @@ Current scope:
 - Both `identifier` and `credential` are encrypted with **AES-256-GCM** before
   they are written to MongoDB. The API only returns plaintext to the
   authenticated owner.
-- `proxy.ts` rejects unauthenticated requests to protected routes before they
-  reach the handlers, and every handler verifies the token again.
+- `proxy.ts` rejects unauthenticated requests to protected API routes before
+  they reach the handlers, and every handler verifies the token again.
 
 ## Setup
 
@@ -61,14 +61,17 @@ Collections created automatically: `users` and `lockers`.
 
 A small UI is included so the backend can be exercised without Postman:
 
-- `/register` — creates a user + locker (auto signs in).
-- `/login` — signs in and stores the httpOnly cookie.
-- `/dashboard` — protected page that loads the locker directly from MongoDB,
-  plus forms to add, reveal, edit, and delete identifiers. Mutations call the
-  same `/api/locker/identifiers` endpoints used by Postman.
+- `/` is the only page. The Server Component reads the session cookie:
+  - signed out: sign in / create account panel (register auto-signs in);
+  - signed in: profile summary, add-credential form, and the saved credentials
+    list with reveal, edit, and delete controls.
+- The fixed header contains the brand and a day/night theme toggle. The choice
+  is saved in `localStorage` and applied before first paint.
+- Mutations call the same `/api/locker/identifiers` endpoints used by Postman.
+- Old `/login`, `/register`, and `/dashboard` URLs permanently redirect to `/`.
 
-The dashboard page is protected by `proxy.ts` and re-checks the session in the
-Server Component before querying the database.
+The page re-checks the session in the Server Component before querying the
+database. `proxy.ts` guards the API routes.
 
 ## Encryption at rest
 

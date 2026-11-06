@@ -1,15 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
+import {
+  EyeIcon,
+  EyeOffIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  TrashIcon,
+} from "@/components/icons";
 import { apiFetch } from "@/lib/client-api";
 import type { SerializedIdentifier } from "@/lib/serializers";
-
-const inputClass =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-100 dark:focus:ring-zinc-100/10";
-
-const secondaryButton =
-  "rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800";
+import {
+  iconButtonClass,
+  inputClass,
+  smallPrimaryButtonClass,
+  smallSecondaryButtonClass,
+} from "@/lib/ui";
 
 export default function IdentifierRow({
   identifier,
@@ -19,21 +32,58 @@ export default function IdentifierRow({
   const router = useRouter();
   const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(identifier.identifier);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [secret, setSecret] = useState(identifier.credential);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const credentialRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function closeOnOutsidePress(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+
+    document.addEventListener("mousedown", closeOnOutsidePress);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsidePress);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (editing) credentialRef.current?.focus();
+  }, [editing]);
 
   function startEditing() {
-    setName(identifier.identifier);
+    setMenuOpen(false);
     setSecret(identifier.credential);
     setError("");
+    setRevealed(true);
     setEditing(true);
+  }
+
+  function cancelEditing() {
+    setSecret(identifier.credential);
+    setError("");
+    setEditing(false);
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!editing) return;
+
     setError("");
     setBusy(true);
 
@@ -41,7 +91,7 @@ export default function IdentifierRow({
       `/api/locker/identifiers/${identifier.id}`,
       {
         method: "PATCH",
-        body: { identifier: name, credential: secret },
+        body: { credential: secret },
       }
     );
 
@@ -57,7 +107,10 @@ export default function IdentifierRow({
   }
 
   async function handleDelete() {
+    setMenuOpen(false);
+
     if (!window.confirm(`Delete "${identifier.identifier}"?`)) return;
+
     setError("");
     setBusy(true);
 
@@ -77,90 +130,116 @@ export default function IdentifierRow({
   }
 
   return (
-    <li className="py-4">
-      {editing ? (
-        <form
-          onSubmit={handleSave}
-          className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-center"
-        >
+    <li className="py-3">
+      <form
+        onSubmit={handleSave}
+        className="flex flex-row items-center gap-1.5 sm:gap-2"
+      >
+        <input
+          type="text"
+          readOnly
+          value={identifier.identifier}
+          aria-label="Identifier"
+          className={`${inputClass} min-w-0 flex-1 cursor-default bg-surface-muted/60`}
+        />
+
+        <div className="relative min-w-0 flex-1">
           <input
-            type="text"
-            required
-            maxLength={200}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className={inputClass}
-            aria-label="Identifier"
-          />
-          <input
-            type="text"
+            ref={credentialRef}
+            type={editing || revealed ? "text" : "password"}
+            readOnly={!editing}
             required
             maxLength={1024}
+            autoComplete="off"
+            spellCheck={false}
             value={secret}
             onChange={(event) => setSecret(event.target.value)}
-            className={inputClass}
             aria-label="Credential"
+            className={`${inputClass} pr-9 ${
+              editing ? "" : "cursor-default bg-surface-muted/60"
+            }`}
           />
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={busy}
-              className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-            >
-              {busy ? "Saving..." : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              disabled={busy}
-              className={secondaryButton}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      ) : (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="truncate font-medium text-zinc-900 dark:text-zinc-50">
-              {identifier.identifier}
-            </p>
-            <p className="mt-1 font-mono text-sm text-zinc-500 dark:text-zinc-400">
-              {revealed ? identifier.credential : "••••••••••••"}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setRevealed((value) => !value)}
-              className={secondaryButton}
-            >
-              {revealed ? "Hide" : "Show"}
-            </button>
-            <button
-              type="button"
-              onClick={startEditing}
-              className={secondaryButton}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={busy}
-              className="rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-950/40"
-            >
-              {busy ? "Deleting..." : "Delete"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setRevealed((value) => !value)}
+            aria-label={revealed ? "Hide credential" : "Show credential"}
+            title={revealed ? "Hide credential" : "Show credential"}
+            className="absolute right-1 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted transition hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+          >
+            {revealed ? (
+              <EyeOffIcon className="h-4 w-4" />
+            ) : (
+              <EyeIcon className="h-4 w-4" />
+            )}
+          </button>
         </div>
-      )}
+
+        <div ref={menuRef} className="relative shrink-0">
+          {editing ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="submit"
+                disabled={busy}
+                className={smallPrimaryButtonClass}
+              >
+                {busy ? "Saving..." : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={cancelEditing}
+                disabled={busy}
+                className={smallSecondaryButtonClass}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setMenuOpen((value) => !value)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label={`Actions for ${identifier.identifier}`}
+              className={iconButtonClass}
+            >
+              <MoreHorizontalIcon className="h-5 w-5" />
+            </button>
+          )}
+
+          {menuOpen && !editing ? (
+            <div
+              role="menu"
+              aria-label={`Actions for ${identifier.identifier}`}
+              className="absolute right-0 top-full z-30 mt-2 w-40 rounded-xl border border-border bg-surface p-1 shadow-[0_12px_32px_rgba(0,0,0,0.14)]"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                onClick={startEditing}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground transition hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+              >
+                <PencilIcon className="h-4 w-4 text-muted" />
+                Edit
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleDelete}
+                disabled={busy}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger transition hover:bg-danger-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <TrashIcon className="h-4 w-4" />
+                Delete
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </form>
 
       {error ? (
         <p
           role="alert"
-          className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
+          className="mt-2 rounded-xl border border-danger/20 bg-danger-muted px-3 py-2 text-sm text-danger"
         >
           {error}
         </p>
