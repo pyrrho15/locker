@@ -1,8 +1,8 @@
-# Locker — password manager (Phase 1 backend)
+# Locker — password manager (Phase 2: encrypted locker)
 
-Next.js App Router + MongoDB/Mongoose backend for a password manager.
+Next.js App Router + MongoDB/Mongoose password manager.
 
-Phase 1 scope:
+Current scope:
 
 - Register / login with an email and password.
 - User passwords are hashed with **bcrypt** (12 salt rounds) before storage.
@@ -10,30 +10,46 @@ Phase 1 scope:
   returned in the JSON response so Postman/API clients can use
   `Authorization: Bearer <token>`.
 - Every user owns one **LOCKER** containing an array of identifiers
-  (`{ identifier, credential }`). Credentials are intentionally **not encrypted**
-  in phase 1, as requested.
+  (`{ identifier, credential }`).
+- Both `identifier` and `credential` are encrypted with **AES-256-GCM** before
+  they are written to MongoDB. The API only returns plaintext to the
+  authenticated owner.
 - `proxy.ts` rejects unauthenticated requests to protected routes before they
   reach the handlers, and every handler verifies the token again.
 
 ## Setup
 
-1. Add your MongoDB connection string to `.env.local`:
+1. Add the required values to `.env.local` (see `.env.example`):
 
    ```bash
    MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/locker?retryWrites=true&w=majority
+   MONGODB_DB=locker
+   AUTH_SECRET=<random secret>
+   CREDENTIALS_ENCRYPTION_KEY=<64 hex characters>
    ```
 
-   `AUTH_SECRET` is already generated in `.env.local`. To rotate it:
+   Generate the secrets with:
 
    ```bash
    openssl rand -hex 32
    ```
 
-   Optional: if your URI has no database name (`...mongodb.net/?retryWrites=...`),
-   set `MONGODB_DB=locker`. Otherwise the app defaults to `locker` instead of
-   Mongoose's default `test` database.
+   `MONGODB_DB` is optional when the URI already includes a database name.
 
-2. Run the dev server:
+   **Back up `CREDENTIALS_ENCRYPTION_KEY` somewhere safe.** It is not stored in
+   MongoDB. Losing it means the encrypted locker data can no longer be
+   decrypted, even with a database backup.
+
+2. If you have locker rows from before encryption was added, encrypt them once:
+
+   ```bash
+   npm run migrate:encrypt
+   ```
+
+   The script rewrites only plaintext values, leaves existing ciphertext alone,
+   and is safe to run more than once.
+
+3. Run the dev server:
 
    ```bash
    npm run dev
@@ -54,6 +70,25 @@ A small UI is included so the backend can be exercised without Postman:
 The dashboard page is protected by `proxy.ts` and re-checks the session in the
 Server Component before querying the database.
 
+## Encryption at rest
+
+Locker fields are encrypted transparently by `models/Locker.ts`:
+
+- Algorithm: **AES-256-GCM** (authenticated encryption).
+- A fresh random **12-byte IV** per value.
+- The field name (`locker:v1:identifier` or `locker:v1:credential`) is bound as
+  **AAD**, so ciphertext cannot be moved between fields without failing.
+- Stored format: `enc:v1:<iv b64>:<auth tag b64>:<ciphertext b64>`.
+- The key comes from `CREDENTIALS_ENCRYPTION_KEY` (32 bytes). The app throws a
+  clear error if it is missing or the wrong length.
+- Legacy plaintext rows are still readable, and `npm run migrate:encrypt`
+  converts them in place.
+
+Mongoose schema setters encrypt on write and getters decrypt on read, so route
+handlers and Server Components work with plaintext while MongoDB only stores
+ciphertext. Reads of locker data intentionally use hydrated documents because
+`.lean({ getters: true })` does not run getters on nested subdocuments.
+
 ## Data model
 
 ```
@@ -62,8 +97,8 @@ _id            ObjectId                 _id            ObjectId
 email          String (unique)          userId         ObjectId -> USER._id (unique)
 password       String (bcrypt hash)     identifiers    [{
 lockerId       ObjectId -> LOCKER._id                   _id,
-createdAt      Date                                     identifier: String,
-updatedAt      Date                                     credential: String
+createdAt      Date                                     identifier: String (AES-256-GCM ciphertext),
+updatedAt      Date                                     credential: String (AES-256-GCM ciphertext)
                                                        }]
                                         createdAt      Date
                                         updatedAt      Date
@@ -149,10 +184,13 @@ register/login) or copy `data.token` into **Authorization → Bearer Token**.
 - `422` schema validation failed (`details` lists the fields)
 - `500` unexpected server error
 
-## Security notes for later phases
+## Security notes
 
-- Credentials are plain text in MongoDB right now — add field-level encryption
-  before production.
+- Locker `identifier` and `credential` values are encrypted at rest. A database
+  dump without `CREDENTIALS_ENCRYPTION_KEY` does not expose them.
+- Keep the encryption key out of the repository and back it up. The current
+  implementation has no automatic key rotation; rotating the key requires
+  decrypting and re-encrypting existing rows with the new key.
 - Tokens last 7 days; there is no refresh/revocation list yet.
 - No rate limiting or account lockout on login yet.
 - Add CSRF protection if the cookie flow is used from a separate frontend.

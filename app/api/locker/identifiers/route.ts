@@ -20,9 +20,10 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const locker = await Locker.findOne({ userId })
-      .select("identifiers createdAt updatedAt")
-      .lean();
+    // Hydrated documents are required so subdocument getters decrypt the data.
+    const locker = await Locker.findOne({ userId }).select(
+      "identifiers createdAt updatedAt"
+    );
     if (!locker) return fail("Locker not found", 404);
 
     const { identifiers } = serializeLocker(locker);
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
 /**
  * POST /api/locker/identifiers
  * Body: { "identifier": "instagram:johndoe", "credential": "hunter2" }
- * Credentials are stored as plain text in phase one, by design.
+ * Both fields are encrypted at rest by the Locker model.
  */
 export async function POST(req: NextRequest) {
   const userId = await requireUserId(req);

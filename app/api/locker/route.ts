@@ -16,7 +16,9 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const locker = await Locker.findOne({ userId }).lean();
+    // Use a hydrated document: subdocument getters decrypt identifier/credential.
+    // Note: `.lean({ getters: true })` does not run getters on nested subdocs.
+    const locker = await Locker.findOne({ userId });
     if (!locker) return fail("Locker not found", 404);
 
     return ok({ locker: serializeLocker(locker) });

@@ -16,7 +16,7 @@ export default function AuthLayout({
             Locker
           </Link>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Phase 1 test console
+            Phase 2 test console
           </p>
         </div>
         {children}

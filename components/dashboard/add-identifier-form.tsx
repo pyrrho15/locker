@@ -48,7 +48,7 @@ export default function AddIdentifierForm() {
         </h2>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Posts to <code className="font-mono text-xs">/api/locker/identifiers</code>.
-          Credentials are stored unencrypted in phase 1.
+          Both fields are encrypted at rest with AES-256-GCM.
         </p>
       </div>
 

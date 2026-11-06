@@ -21,7 +21,7 @@ export default function DashboardPage() {
         <header className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-              Phase 1 test console
+              Phase 2 test console
             </p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
               Locker
@@ -49,7 +49,7 @@ async function DashboardContent() {
 
   const [user, locker] = await Promise.all([
     User.findById(userId).select("email createdAt").lean(),
-    Locker.findOne({ userId }).lean(),
+    Locker.findOne({ userId }),
   ]);
 
   if (!user) {

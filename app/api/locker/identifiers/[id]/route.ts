@@ -28,7 +28,8 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   try {
     await connectDB();
 
-    const locker = await Locker.findOne({ userId }).select("identifiers").lean();
+    // Hydrated documents are required so subdocument getters decrypt the data.
+    const locker = await Locker.findOne({ userId }).select("identifiers");
     const identifier = locker?.identifiers.find(
       (entry) => String(entry._id) === id
     );

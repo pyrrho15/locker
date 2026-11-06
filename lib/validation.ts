@@ -33,7 +33,7 @@ export const identifierCreateSchema = z
       .trim()
       .min(1, "Identifier is required")
       .max(200, "Identifier is too long"),
-    // Credentials are stored as-is in phase one, so preserve whitespace exactly.
+    // Preserve whitespace exactly; the model encrypts the value on write.
     credential: z
       .string()
       .min(1, "Credential is required")
