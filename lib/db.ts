@@ -30,7 +30,7 @@ export async function connectDB(): Promise<typeof mongoose> {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     throw new Error(
-      "Please define MONGODB_URI in .env.local (a MongoDB connection string)."
+      "Please define MONGODB_URI in .env (a MongoDB connection string)."
     );
   }
 

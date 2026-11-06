@@ -19,7 +19,7 @@ Current scope:
 
 ## Setup
 
-1. Add the required values to `.env.local` (see `.env.example`):
+1. Add the required values to `.env` (see `.env.example`):
 
    ```bash
    MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/locker?retryWrites=true&w=majority
@@ -56,6 +56,25 @@ Current scope:
    ```
 
 Collections created automatically: `users` and `lockers`.
+
+## Deploying to Vercel
+
+`.env` is gitignored, so it is only used for local development. Vercel does
+**not** read it from the repository. Add the same variables in the Vercel
+project before deploying:
+
+- Project → Settings → Environment Variables, or
+- `vercel env add MONGODB_URI`, and repeat for `MONGODB_DB`, `AUTH_SECRET`, and
+  `CREDENTIALS_ENCRYPTION_KEY` (choose Production, Preview, and Development).
+
+Then deploy:
+
+```bash
+vercel --prod
+```
+
+Use the same `CREDENTIALS_ENCRYPTION_KEY` as your existing data. Changing it
+will make previously encrypted locker entries unreadable.
 
 ## Test UI
 

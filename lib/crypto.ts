@@ -26,7 +26,7 @@ function getKey(): Buffer {
   const raw = process.env.CREDENTIALS_ENCRYPTION_KEY;
   if (!raw) {
     throw new Error(
-      "Please define CREDENTIALS_ENCRYPTION_KEY in .env.local (openssl rand -hex 32)."
+      "Please define CREDENTIALS_ENCRYPTION_KEY in .env (openssl rand -hex 32)."
     );
   }
 

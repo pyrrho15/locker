@@ -8,7 +8,7 @@ function getSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET ?? process.env.JWT_SECRET;
   if (!secret) {
     throw new Error(
-      "Please define AUTH_SECRET in .env.local (use `openssl rand -hex 32`)."
+      "Please define AUTH_SECRET in .env (use `openssl rand -hex 32`)."
     );
   }
   return new TextEncoder().encode(secret);

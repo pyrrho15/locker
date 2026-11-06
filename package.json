@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "migrate:encrypt": "node --import tsx --env-file=.env.local scripts/migrate-encrypt.ts"
+    "migrate:encrypt": "node --import tsx --env-file=.env scripts/migrate-encrypt.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
